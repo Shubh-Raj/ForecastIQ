@@ -1,0 +1,12 @@
+{
+  "name": "ai-predictive-forecasting",
+  "version": "1.0.0",
+  "description": "AI-powered predictive forecasting tool for trend analysis, anomaly detection, and scenario comparison",
+  "scripts": {
+    "start": "python src/backend/app.py",
+    "test": "pytest tests/ -v"
+  },
+  "keywords": ["forecasting", "ai", "machine-learning", "anomaly-detection", "time-series"],
+  "author": "Shubhraj",
+  "license": "Apache-2.0"
+}

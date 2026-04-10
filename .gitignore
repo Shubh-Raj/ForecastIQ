@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Data uploads (user-uploaded files, not committed)
+uploads/
+
+# pytest cache
+.pytest_cache/
+__pycache__/
+
+# venv
+venv/
+
+# Logs
+*.log
+debug.log
+
+# Coverage
+coverage/
+.coverage
+htmlcov/
+
+# Distribution
+*.tar.gz
+*.whl
+
+guidelines.txt
+projectdetails.txt
+
+
