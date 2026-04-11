@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ForecastIQ - AI-powered predictive forecasting tool for trend analysis, anomaly detection, and scenario comparison">
+    <title>ForecastIQ — AI Predictive Forecasting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Ambient Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb ambient-orb-1"></div>
+        <div class="ambient-orb ambient-orb-2"></div>
+        <div class="ambient-orb ambient-orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="main-header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366f1"/>
+                                <stop offset="100%" style="stop-color:#8b5cf6"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="32" height="32" rx="8" fill="url(#logoGrad)"/>
+                        <path d="M8 22 L12 14 L16 18 L20 10 L24 16" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <circle cx="24" cy="16" r="2" fill="white"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">Forecast<span class="logo-accent">IQ</span></h1>
+            </div>
+            <nav class="nav-tabs" id="nav-tabs">
+                <button class="nav-tab active" data-tab="forecast" id="nav-forecast">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                    </svg>
+                    Plan Ahead
+                </button>
+                <button class="nav-tab" data-tab="anomaly" id="nav-anomaly">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Spot Trouble
+                </button>
+                <button class="nav-tab" data-tab="scenario" id="nav-scenario">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Compare Plans
+                </button>
+            </nav>
+            <div class="header-actions">
+                <button class="btn btn-ghost" id="btn-upload" title="Upload Dataset">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dataset Selector Bar -->
+        <div class="dataset-bar" id="dataset-bar">
+            <div class="dataset-selector">
+                <label for="dataset-select" class="selector-label">Dataset</label>
+                <select id="dataset-select" class="select-input">
+                    <option value="">Loading datasets...</option>
+                </select>
+            </div>
+            <div class="dataset-selector">
+                <label for="column-select" class="selector-label">Metric</label>
+                <select id="column-select" class="select-input">
+                    <option value="">Select column</option>
+                </select>
+            </div>
+            <div class="dataset-info" id="dataset-info">
+                <span class="info-badge" id="data-points-badge">—</span>
+                <span class="info-badge" id="date-range-badge">—</span>
+            </div>
+        </div>
+
+        <!-- Tab Panels -->
+        <!-- FORECAST TAB -->
+        <section class="tab-panel active" id="panel-forecast">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Short-Term Forecast</h2>
+                    <p class="panel-subtitle">Predict the next few weeks with confidence ranges</p>
+                </div>
+                <div class="panel-controls">
+                    <div class="control-group">
+                        <label for="forecast-horizon">Horizon</label>
+                        <select id="forecast-horizon" class="select-input select-sm">
+                            <option value="2">2 weeks</option>
+                            <option value="4" selected>4 weeks</option>
+                            <option value="6">6 weeks</option>
+                            <option value="8">8 weeks</option>
+                            <option value="12">12 weeks</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="forecast-confidence">Confidence</label>
+                        <select id="forecast-confidence" class="select-input select-sm">
+                            <option value="0.80">80%</option>
+                            <option value="0.90">90%</option>
+                            <option value="0.95" selected>95%</option>
+                            <option value="0.99">99%</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btn-forecast">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        Generate Forecast
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container glass-card" id="forecast-chart-container">
+                <div class="chart-placeholder" id="forecast-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                    </svg>
+                    <p>Select a dataset and click <strong>Generate Forecast</strong> to begin</p>
+                </div>
+                <canvas id="forecast-chart" style="display:none;"></canvas>
+            </div>
+
+            <div class="insights-row" id="forecast-insights" style="display:none;">
+                <div class="insight-card glass-card">
+                    <div class="insight-icon insight-icon-trend">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/></svg>
+                    </div>
+                    <div class="insight-content">
+                        <span class="insight-label">Trend Direction</span>
+                        <span class="insight-value" id="insight-trend">—</span>
+                    </div>
+                </div>
+                <div class="insight-card glass-card">
+                    <div class="insight-icon insight-icon-range">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V8M5 12H2a10 10 0 0020 0h-3"/></svg>
+                    </div>
+                    <div class="insight-content">
+                        <span class="insight-label">Expected Range</span>
+                        <span class="insight-value" id="insight-range">—</span>
+                    </div>
+                </div>
+                <div class="insight-card glass-card">
+                    <div class="insight-icon insight-icon-accuracy">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    </div>
+                    <div class="insight-content">
+                        <span class="insight-label">Model Accuracy</span>
+                        <span class="insight-value" id="insight-accuracy">—</span>
+                    </div>
+                </div>
+                <div class="insight-card glass-card">
+                    <div class="insight-icon insight-icon-baseline">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </div>
+                    <div class="insight-content">
+                        <span class="insight-label">vs Baseline</span>
+                        <span class="insight-value" id="insight-baseline">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explanation-card glass-card" id="forecast-explanation" style="display:none;">
+                <div class="explanation-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>AI Explanation</span>
+                </div>
+                <p class="explanation-text" id="forecast-explanation-text"></p>
+            </div>
+        </section>
+
+        <!-- ANOMALY TAB -->
+        <section class="tab-panel" id="panel-anomaly">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Anomaly Detection</h2>
+                    <p class="panel-subtitle">Spot unusual spikes and dips that need attention</p>
+                </div>
+                <div class="panel-controls">
+                    <div class="control-group">
+                        <label for="anomaly-sensitivity">Sensitivity</label>
+                        <select id="anomaly-sensitivity" class="select-input select-sm">
+                            <option value="1">Very Low</option>
+                            <option value="2">Low</option>
+                            <option value="3" selected>Medium</option>
+                            <option value="4">High</option>
+                            <option value="5">Very High</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btn-anomaly">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Detect Anomalies
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container glass-card" id="anomaly-chart-container">
+                <div class="chart-placeholder" id="anomaly-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    </svg>
+                    <p>Select a dataset and click <strong>Detect Anomalies</strong> to scan for unusual patterns</p>
+                </div>
+                <canvas id="anomaly-chart" style="display:none;"></canvas>
+            </div>
+
+            <div class="anomaly-results" id="anomaly-results" style="display:none;">
+                <div class="anomaly-summary glass-card" id="anomaly-summary">
+                    <div class="summary-stat">
+                        <span class="stat-number" id="stat-total-anomalies">0</span>
+                        <span class="stat-label">Anomalies</span>
+                    </div>
+                    <div class="summary-stat summary-stat-critical">
+                        <span class="stat-number" id="stat-critical">0</span>
+                        <span class="stat-label">Critical</span>
+                    </div>
+                    <div class="summary-stat summary-stat-warning">
+                        <span class="stat-number" id="stat-warnings">0</span>
+                        <span class="stat-label">Warnings</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="stat-number" id="stat-anomaly-rate">0%</span>
+                        <span class="stat-label">Anomaly Rate</span>
+                    </div>
+                </div>
+
+                <div class="anomaly-list glass-card" id="anomaly-list">
+                    <h3>Detected Anomalies</h3>
+                    <div class="anomaly-items" id="anomaly-items"></div>
+                </div>
+            </div>
+
+            <div class="explanation-card glass-card" id="anomaly-explanation" style="display:none;">
+                <div class="explanation-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>AI Analysis</span>
+                </div>
+                <p class="explanation-text" id="anomaly-explanation-text"></p>
+            </div>
+        </section>
+
+        <!-- SCENARIO TAB -->
+        <section class="tab-panel" id="panel-scenario">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Scenario Comparison</h2>
+                    <p class="panel-subtitle">Test "what-if" scenarios and compare outcomes side by side</p>
+                </div>
+            </div>
+
+            <div class="scenario-controls glass-card">
+                <div class="scenario-grid">
+                    <div class="control-group">
+                        <label for="scenario-growth">Growth Adjustment</label>
+                        <div class="slider-container">
+                            <input type="range" id="scenario-growth" class="range-input" min="-50" max="100" value="10" step="5">
+                            <span class="slider-value" id="growth-value">+10%</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="scenario-pattern">Pattern Type</label>
+                        <select id="scenario-pattern" class="select-input">
+                            <option value="trend">Keep Trend</option>
+                            <option value="flat">Remove Trend (Flat)</option>
+                            <option value="seasonal">Amplify Seasonality</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="scenario-horizon">Forecast Horizon</label>
+                        <select id="scenario-horizon" class="select-input select-sm">
+                            <option value="2">2 weeks</option>
+                            <option value="4" selected>4 weeks</option>
+                            <option value="6">6 weeks</option>
+                            <option value="8">8 weeks</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="scenario-outliers"> Remove Outliers
+                        </label>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-wide" id="btn-scenario">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Compare Scenarios
+                </button>
+            </div>
+
+            <div class="chart-container glass-card" id="scenario-chart-container">
+                <div class="chart-placeholder" id="scenario-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    </svg>
+                    <p>Adjust the parameters above and click <strong>Compare Scenarios</strong></p>
+                </div>
+                <canvas id="scenario-chart" style="display:none;"></canvas>
+            </div>
+
+            <div class="scenario-comparison" id="scenario-comparison" style="display:none;">
+                <div class="comparison-cards" id="comparison-cards"></div>
+            </div>
+
+            <div class="explanation-card glass-card" id="scenario-explanation" style="display:none;">
+                <div class="explanation-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>AI Comparison</span>
+                </div>
+                <p class="explanation-text" id="scenario-explanation-text"></p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="upload-modal" style="display:none;">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3>Upload Dataset</h3>
+                <button class="btn-close" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="upload-zone">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p>Drag & drop a CSV file here</p>
+                    <p class="upload-hint">or click to browse</p>
+                    <input type="file" id="file-input" accept=".csv" hidden>
+                </div>
+                <div class="upload-status" id="upload-status" style="display:none;">
+                    <div class="upload-progress" id="upload-progress"></div>
+                    <p id="upload-message"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <p class="loading-text" id="loading-text">Analyzing data...</p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/forecast.js"></script>
+    <script src="js/anomaly.js"></script>
+    <script src="js/scenario.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
