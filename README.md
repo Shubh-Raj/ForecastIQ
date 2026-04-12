@@ -70,7 +70,7 @@ flowchart TD
     subgraph External ["DATA & EXTERNAL SERVICES"]
         CSV[("CSV Files\n(data/ & uploads/)")]
         Stats["statsmodels\n(ETS, ARIMA)"]
-        GCP[{"Google Gemini API\n(free tier NLG)"}]
+        GCP["Google Gemini API\n(free tier NLG)"]
     end
 
     JS <-->|HTTP/JSON REST| Routes
@@ -258,31 +258,30 @@ Shows how the system's components relate at deployment time.
 ```mermaid
 flowchart TD
     subgraph Component_Frontend ["Frontend Component (SPA)"]
-        HTML[UI Tabs\n(Forecast, Anomaly, Scenario)]
-        SW[Service Worker\n(sw.js)]
+        HTML["UI Tabs\n(Forecast, Anomaly, Scenario)"]
+        SW["Service Worker\n(sw.js)"]
         JS["Client Logic\n(api.js, charts.js, extras.js)"]
         
         HTML --> JS
-        HTML -.->|Cache| SW
+        HTML -.->|"Cache"| SW
     end
 
     subgraph Component_Backend ["Backend Component (Flask)"]
-        API[Flask Routes\n/api/*]
-        Utils[Data Loader & Validators]
-        Services["Core Services\n(Forecaster, AnomalyDetector, 
-             Model_Comparison, Backtester, DataQuality)"]
+        API["Flask Routes\n/api/*"]
+        Utils["Data Loader & Validators"]
+        Services["Core Services\n(Forecaster, AnomalyDetector,\nModel_Comparison, Backtester, DataQuality)"]
         
         API --> Utils
         API --> Services
     end
 
     subgraph Component_Data ["Data Store & External"]
-        CSV[/"CSV Data Files"/]
+        CSV[("CSV Data Files")]
         Gemini{"Google Gemini API"}
-        Stats[[statsmodels Python Lib]]
+        Stats["statsmodels Python Lib"]
     end
 
-    JS <-->|REST over HTTP| API
+    JS <-->|"REST over HTTP"| API
     Utils --> CSV
     Services --> Gemini
     Services --> Stats
