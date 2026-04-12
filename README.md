@@ -28,20 +28,20 @@
 > Every feature listed below is **implemented and working** in this codebase. Nothing is planned or incomplete.
 
 ### Core Use Cases (Required)
-- ✅ **Plan Ahead — Short-term Forecasting** — ETS model generates 1–12 period forecasts with low/likely/high confidence bands, trend direction, and seasonal decomposition
-- ✅ **Spot Trouble Early — Anomaly Detection** — Flags unusual spikes and dips using Z-score + IQR + residual methods; severity scoring (critical/warning); deviation % from expected range; AI suggested next steps
-- ✅ **Compare Plans — Scenario Forecasting** — Side-by-side forecasts with growth-rate slider (–50% to +100%), pattern adjustment (trend/flat/seasonal), and outlier removal; quantified difference summary
+- **Plan Ahead — Short-term Forecasting** — ETS model generates 1–12 period forecasts with low/likely/high confidence bands, trend direction, and seasonal decomposition
+- **Spot Trouble Early — Anomaly Detection** — Flags unusual spikes and dips using Z-score + IQR + residual methods; severity scoring (critical/warning); deviation % from expected range; AI suggested next steps
+- **Compare Plans — Scenario Forecasting** — Side-by-side forecasts with growth-rate slider (–50% to +100%), pattern adjustment (trend/flat/seasonal), and outlier removal; quantified difference summary
 
 ### Differentiating Features (Beyond Requirements)
-- 🏆 **Multi-Model Horse Race** — Runs ETS vs ARIMA(1,1,1) vs Moving Average simultaneously; ranks by MAPE on a hold-out set; highlights winner; uses best model's forecast automatically
-- 🔬 **Walk-Forward Backtesting** — Validates accuracy on held-out historical data; shows MAE, RMSE, MAPE, hit rate (% of actuals inside confidence band), and directional bias
-- 📊 **Data Health Score** — ADF stationarity test + completeness + date regularity + seasonality strength → A–D grade with plain-English warnings *before* any analysis runs
-- 🚨 **Early Warning Alert Threshold** — User sets a numeric threshold; if the pessimistic (lower bound) forecast crosses it, a red banner fires instantly — "Understand uncertainty and take early action"
-- ⬇ **CSV Export** — Download forecast results and anomaly lists as spreadsheet-ready CSV with one click
-- 📱 **Progressive Web App (PWA)** — Installable on desktop/mobile; service worker caches static assets for offline use
-- 🤖 **AI Explanations** — Google Gemini API generates plain-English summaries; gracefully falls back to intelligently crafted templates when the API key is absent
-- 📋 **Baseline Comparison** — Every forecast is automatically compared against naive persistence and moving-average baselines; "vs Baseline" insight card shows whether the model is earning its complexity
-- 🔄 **Auto-column Detection** — Detects date and numeric columns in any CSV automatically; no manual column mapping required
+- **Multi-Model Horse Race** — Runs ETS vs ARIMA(1,1,1) vs Moving Average simultaneously; ranks by MAPE on a hold-out set; highlights winner; uses best model's forecast automatically
+- **Walk-Forward Backtesting** — Validates accuracy on held-out historical data; shows MAE, RMSE, MAPE, hit rate (% of actuals inside confidence band), and directional bias
+- **Data Health Score** — ADF stationarity test + completeness + date regularity + seasonality strength → A–D grade with plain-English warnings *before* any analysis runs
+- **Early Warning Alert Threshold** — User sets a numeric threshold; if the pessimistic (lower bound) forecast crosses it, a red banner fires instantly — "Understand uncertainty and take early action"
+- **CSV Export** — Download forecast results and anomaly lists as spreadsheet-ready CSV with one click
+- **Progressive Web App (PWA)** — Installable on desktop/mobile; service worker caches static assets for offline use
+- **AI Explanations** — Google Gemini API generates plain-English summaries; gracefully falls back to intelligently crafted templates when the API key is absent
+- **Baseline Comparison** — Every forecast is automatically compared against naive persistence and moving-average baselines; "vs Baseline" insight card shows whether the model is earning its complexity
+- **Auto-column Detection** — Detects date and numeric columns in any CSV automatically; no manual column mapping required
 
 ---
 
@@ -90,109 +90,84 @@ flowchart TD
 
 This diagram shows the internal class/module structure of the backend services layer with data types.
 
-```
-src/backend/
-│
-├── app.py  ── create_app() ──────────────────────────────────────────────────┐
-│                 registers blueprints, CORS, file limits, static serving      │
-│                 exposes: GET /health                                         │
-│                                                                              │
-├── config.py  ── Config  ──────────────────────────────────────────────────┐  │
-│                   .GEMINI_API_KEY: str                                     │  │
-│                   .DATA_DIR: str                                           │  │
-│                   .UPLOAD_DIR: str                                         │  │
-│                   .MAX_UPLOAD_MB: int                                      │  │
-│                   .validate() → None                                       │  │
-│                                                                            │  │
-├── utils/                                                                   │  │
-│   ├── data_loader.py                                                       │  │
-│   │     load_csv(path) → DataFrame                                         │  │
-│   │     detect_date_column(df) → str | None                                │  │
-│   │     detect_numeric_columns(df) → List[str]                             │  │
-│   │     prepare_time_series(df, date_col?, value_col?) → (df, str, str)   │  │
-│   │     get_dataset_summary(df) → Dict                                     │  │
-│   │     list_available_datasets(dir) → List[Dict]                         │  │
-│   │                                                                        │  │
-│   └── validators.py                                                        │  │
-│         validate_forecast_params(params) → Dict                            │  │
-│         validate_anomaly_params(params) → Dict                             │  │
-│         validate_scenario_params(params) → Dict                            │  │
-│                                                                            │  │
-├── services/                                                                │  │
-│   │                                                                        │  │
-│   ├── forecaster.py  ─────────────────────────────────────────────────    │  │
-│   │     fit_ets_model(series, seasonal_periods?, trend, seasonal)          │  │
-│   │         → ExponentialSmoothingResults                                  │  │
-│   │     generate_forecast(series, horizon, confidence, seasonal_periods?)  │  │
-│   │         → { forecast[], lower_bound[], upper_bound[],                  │  │
-│   │             model_summary{mape,rmse,aic}, decomposition{},             │  │
-│   │             fitted_values[] }                                          │  │
-│   │     _detect_seasonal_period(series) → int | None   [via ACF peaks]    │  │
-│   │     _decompose_series(series, period?) → {trend[], seasonal[], resid}  │  │
-│   │     _z_score_for_confidence(confidence) → float   [scipy.stats.norm]  │  │
-│   │                                                                        │  │
-│   ├── model_comparison.py  ──────────────────────────────────────────     │  │
-│   │     compare_models(series, horizon, confidence, holdout_size?)         │  │
-│   │         → { models{ETS,ARIMA,MA}, winner:str, leaderboard[],          │  │
-│   │             winner_forecast[], winner_lower[], winner_upper[] }        │  │
-│   │     _fit_arima_forecast(series, horizon, confidence)                   │  │
-│   │         → { forecast[], lower_bound[], upper_bound[], mape, rmse }    │  │
-│   │     _eval_mape(train, holdout, horizon, holdout_size, model_type)     │  │
-│   │         → float | None                                                 │  │
-│   │                                                                        │  │
-│   ├── backtester.py  ────────────────────────────────────────────────     │  │
-│   │     walk_forward_backtest(series, dates, holdout_size?, confidence)    │  │
-│   │         → { train_dates[], holdout_dates[], actual_values[],           │  │
-│   │             forecast_values[], lower_bound[], upper_bound[],           │  │
-│   │             metrics{mae,rmse,mape,hit_rate,bias},                      │  │
-│   │             interpretation:str }                                       │  │
-│   │     _interpret_metrics(mape, hit_rate, confidence) → str              │  │
-│   │                                                                        │  │
-│   ├── data_quality.py  ──────────────────────────────────────────────     │  │
-│   │     assess_data_quality(series, dates)                                 │  │
-│   │         → { health_score:float, grade:str, completeness:float,        │  │
-│   │             date_regularity:float, is_stationary:bool|None,            │  │
-│   │             adf_pvalue:float, seasonality_strength:float,              │  │
-│   │             recommended_model:str, warnings:List[str] }               │  │
-│   │     _adf_stationarity(series) → (bool|None, float|None)              │  │
-│   │     _compute_seasonality_strength(series) → float   [via ACF]        │  │
-│   │                                                                        │  │
-│   ├── anomaly_detector.py  ─────────────────────────────────────────     │  │
-│   │     detect_anomalies(series, dates, sensitivity)                       │  │
-│   │         → { anomalies[], total_anomalies:int,                         │  │
-│   │             summary{critical_count, warning_count, anomaly_rate},      │  │
-│   │             historical{}, explanation:str }                            │  │
-│   │     _zscore_detection(series, sensitivity) → List[(idx,sev,method)]  │  │
-│   │     _iqr_detection(series, sensitivity) → List[(idx,sev,method)]     │  │
-│   │     _merge_anomalies(List[(idx,sev,method)]) → merged list           │  │
-│   │                                                                        │  │
-│   ├── scenario_engine.py  ──────────────────────────────────────────      │  │
-│   │     compare_scenarios(series, dates, horizon, scenarios?)              │  │
-│   │         → { baseline{}, scenarios[], comparison{} }                   │  │
-│   │     create_scenario_forecast(series, dates, horizon,                   │  │
-│   │                              growth_adjustment, remove_outliers,       │  │
-│   │                              pattern) → { forecast[], bounds[] }      │  │
-│   │     _apply_growth_adjustment(series, rate) → Series                   │  │
-│   │     _apply_pattern(series, pattern) → Series                          │  │
-│   │                                                                        │  │
-│   ├── baseline.py  ────────────────────────────────────────────────       │  │
-│   │     compare_with_baseline(series, forecast) → { best_method:str,     │  │
-│   │       model_beats_baseline:bool, methods{persistence, moving_avg} }   │  │
-│   │                                                                        │  │
-│   └── explainer.py  ───────────────────────────────────────────────       │  │
-│         configure_gemini(api_key) → None                                   │  │
-│         explain_forecast(result, horizon) → str                            │  │
-│         explain_anomalies(result) → str                                    │  │
-│         explain_scenario(result) → str                                     │  │
-│         [falls back to _template_* functions when Gemini unavailable]     │  │
-│                                                                            │  │
-└── routes/                                                                  │  │
-      forecast.py    → forecast_bp   : Blueprint ──────────────────────────┘  │
-      anomaly.py     → anomaly_bp    : Blueprint                              │
-      scenario.py    → scenario_bp   : Blueprint                             │
-      dataset.py     → dataset_bp    : Blueprint                             │
-      extras.py      → extras_bp     : Blueprint                             │
-      [all blueprints registered in create_app()] ◄─────────────────────────┘
+```mermaid
+classDiagram
+    %% Core App and Config
+    class app {
+        +create_app() Flask App
+    }
+    class config {
+        +GEMINI_API_KEY : str
+        +DATA_DIR, UPLOAD_DIR : str
+        +validate() None
+    }
+    
+    %% Utilities
+    class data_loader {
+        +load_csv(path) DataFrame
+        +prepare_time_series() Tuple
+    }
+    class validators {
+        +validate_forecast_params(p) Dict
+        +validate_anomaly_params(p) Dict
+    }
+
+    %% Backend Services
+    class forecaster {
+        +fit_ets_model() Result
+        +generate_forecast() Dict
+        -_detect_seasonal_period() int
+    }
+    class model_comparison {
+        +compare_models() Dict
+        -_fit_arima_forecast() Dict
+    }
+    class backtester {
+        +walk_forward_backtest() Dict
+    }
+    class data_quality {
+        +assess_data_quality() Dict
+        -_adf_stationarity() bool
+    }
+    class anomaly_detector {
+        +detect_anomalies() Dict
+        -_zscore_detection() List
+        -_iqr_detection() List
+    }
+    class scenario_engine {
+        +create_scenario_forecast() Dict
+    }
+    class baseline {
+        +compare_with_baseline() Dict
+    }
+    class explainer {
+        +explain_forecast() str
+        +explain_anomalies() str
+        +explain_scenario() str
+    }
+
+    %% Routing
+    class routes {
+        +forecast_bp
+        +anomaly_bp
+        +scenario_bp
+        +dataset_bp
+        +extras_bp
+    }
+
+    %% Relationships
+    app --> config
+    app --> routes
+    routes --> forecaster
+    routes --> anomaly_detector
+    routes --> scenario_engine
+    routes --> data_loader
+    routes --> validators
+    routes --> model_comparison
+    routes --> backtester
+    routes --> data_quality
+    routes --> explainer
+    routes --> baseline
 ```
 
 ---
