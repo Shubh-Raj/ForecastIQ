@@ -51,43 +51,32 @@
 
 The system is divided into three independent layers: a browser-based Single Page Application (SPA), a Python REST API server, and external AI/data services.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                          CLIENT LAYER (Browser / PWA)                        │
-│                                                                              │
-│   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────────┐  │
-│   │  Plan Ahead Tab  │  │ Spot Trouble Tab  │  │  Compare Plans Tab       │  │
-│   │  (Forecast UI)   │  │  (Anomaly UI)     │  │  (Scenario UI)           │  │
-│   └────────┬─────────┘  └────────┬──────────┘  └────────────┬─────────────┘  │
-│            │                     │                           │                │
-│   ┌────────▼─────────────────────▼───────────────────────────▼──────────┐    │
-│   │              Vanilla JS Modules  +  Chart.js 4.x                    │    │
-│   │   api.js · forecast.js · anomaly.js · scenario.js · backtest.js     │    │
-│   │   model_race.js · extras.js (DataQuality, Threshold, Export)        │    │
-│   └─────────────────────────────┬───────────────────────────────────────┘    │
-│                                 │  HTTP/JSON (REST)                          │
-└─────────────────────────────────┼──────────────────────────────────────────┘
-                                  │
-                    ╔═════════════▼══════════════════════╗
-                    ║       FLASK API SERVER              ║
-                    ║   (Python 3.12 + Flask 3.1)         ║
-                    ║                                     ║
-                    ║  /api/forecast                      ║
-                    ║  /api/anomalies                     ║
-                    ║  /api/scenarios                     ║
-                    ║  /api/backtest                      ║
-                    ║  /api/data-quality                  ║
-                    ║  /api/model-comparison              ║
-                    ║  /api/datasets                      ║
-                    ╚═════════════╤══════════════════════╝
-                                  │
-               ┌──────────────────┼─────────────────────┐
-               │                  │                      │
-      ┌────────▼──────┐  ┌────────▼──────┐  ┌───────────▼────────┐
-      │  CSV Files    │  │  statsmodels  │  │  Google Gemini API  │
-      │  data/ +      │  │  ETS, ARIMA,  │  │  (free tier NLG)   │
-      │  uploads/     │  │  ADF, ACF     │  │  + Template FB     │
-      └───────────────┘  └───────────────┘  └────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Client ["CLIENT LAYER (Browser / PWA)"]
+        F1("Plan Ahead Tab\n(Forecast UI)")
+        A1("Spot Trouble Tab\n(Anomaly UI)")
+        S1("Compare Plans Tab\n(Scenario UI)")
+        
+        JS["Vanilla JS Modules + Chart.js 4.x\napi.js · forecast.js · anomaly.js · scenario.js\nbacktest.js · extras.js"]
+        
+        F1 & A1 & S1 --> JS
+    end
+
+    subgraph API ["FLASK API SERVER (Python 3.12 + Flask 3.1)"]
+        Routes["/api/forecast\n/api/anomalies\n/api/scenarios\n/api/backtest\n/api/data-quality\n/api/datasets"]
+    end
+
+    subgraph External ["DATA & EXTERNAL SERVICES"]
+        CSV[("CSV Files\n(data/ & uploads/)")]
+        Stats["statsmodels\n(ETS, ARIMA)"]
+        GCP[{"Google Gemini API\n(free tier NLG)"}]
+    end
+
+    JS <-->|HTTP/JSON REST| Routes
+    Routes --> CSV
+    Routes --> Stats
+    Routes --> GCP
 ```
 
 **Key HLD decisions:**
@@ -212,82 +201,52 @@ src/backend/
 
 Shows the exact sequence of calls when a user clicks "Generate Forecast".
 
-```
-Browser          app.js          api.js         Flask /api/forecast       Services
-   │                │               │                    │                    │
-   │ click          │               │                    │                    │
-   │"Generate"──►  │               │                    │                    │
-   │               │ runForecast() │                    │                    │
-   │               │──────────────►│                    │                    │
-   │               │               │  POST /api/forecast│                    │
-   │               │               │  {dataset,horizon, │                    │
-   │               │               │   confidence,      │                    │
-   │               │               │   value_column}    │                    │
-   │               │               │───────────────────►│                    │
-   │               │               │                    │ validate_params()  │
-   │               │               │                    │ load_csv()         │
-   │               │               │                    │ prepare_time_series│
-   │               │               │                    │───────────────────►│
-   │               │               │                    │                    │ generate_forecast()
-   │               │               │                    │                    │ ┌─ fit_ets_model()
-   │               │               │                    │                    │ ├─ compute intervals
-   │               │               │                    │                    │ └─ _decompose_series()
-   │               │               │                    │◄───────────────────│
-   │               │               │                    │ compare_with_baseline()
-   │               │               │                    │───────────────────►│
-   │               │               │                    │◄───────────────────│
-   │               │               │                    │ explain_forecast()  │
-   │               │               │                    │───────────────────►│
-   │               │               │                    │              ┌─ Gemini API
-   │               │               │                    │              │  (or template)
-   │               │               │                    │◄─────────────┘
-   │               │               │  200 OK JSON       │                    │
-   │               │               │  {status,data{     │                    │
-   │               │               │    historical,     │                    │
-   │               │               │    forecast,       │                    │
-   │               │               │    baseline_comparison,                 │
-   │               │               │    model_summary,  │                    │
-   │               │               │    explanation}}   │                    │
-   │               │◄──────────────│                    │                    │
-   │               │ renderChart() │                    │                    │
-   │               │ renderInsights│                    │                    │
-   │               │ ThresholdAlert│                    │                    │
-   │◄──────────────│               │                    │                    │
-   │  Chart + UI   │               │                    │                    │
-   │  updated      │               │                    │                    │
+```mermaid
+sequenceDiagram
+    participant B as Browser (app.js)
+    participant API as api.js
+    participant F as Flask (/api/forecast)
+    participant S as Services (forecaster)
+    participant G as Gemini API
+
+    B->>API: runForecast(dataset, horizon)
+    API->>F: POST /api/forecast {dataset, horizon...}
+    F->>S: validate_params()
+    F->>S: prepare_time_series()
+    F->>S: generate_forecast()
+    S-->>F: fit_ets_model() & decompose
+    F->>S: compare_with_baseline()
+    F->>S: explain_forecast()
+    S->>G: Request natural language summary
+    G-->>S: Return AI Summary (or template fallback)
+    F-->>API: 200 OK JSON {forecast, explanation, baseline}
+    API-->>B: Render Chart.js
+    B->>B: Render UI Insights & Alert Banner
 ```
 
 ---
 
 ### 4. Request / Sequence Diagram — Anomaly Detection Flow
 
-```
-Browser        AnomalyTab        api.js      Flask /api/anomalies     Services
-   │               │               │                 │                    │
-   │ click         │               │                 │                    │
-   │"Detect"──────►│               │                 │                    │
-   │               │ runDetection()│                 │                    │
-   │               │──────────────►│                 │                    │
-   │               │               │ POST {dataset,  │                    │
-   │               │               │  sensitivity,   │                    │
-   │               │               │  value_column}  │                    │
-   │               │               │────────────────►│                    │
-   │               │               │                 │ load + prepare     │
-   │               │               │                 │────────────────────►
-   │               │               │                 │                    │ ┌─ _zscore_detection()
-   │               │               │                 │                    │ ├─ _iqr_detection()
-   │               │               │                 │                    │ ├─ _residual_detection()
-   │               │               │                 │                    │ └─ _merge_anomalies()
-   │               │               │                 │◄────────────────────
-   │               │               │                 │ explain_anomalies() ───► Gemini/template
-   │               │               │ 200 OK          │                    │
-   │               │◄──────────────│ {anomalies[],   │                    │
-   │               │               │  total,summary, │                    │
-   │               │               │  explanation}   │                    │
-   │               │ renderChart() │                 │                    │
-   │               │ renderList()  │                 │                    │
-   │               │ CSV Export ◄──│(stored in lastData)                  │
-   │◄──────────────│               │                 │                    │
+```mermaid
+sequenceDiagram
+    participant B as Browser (AnomalyTab)
+    participant API as api.js
+    participant F as Flask (/api/anomalies)
+    participant S as Services (anomaly_detector)
+
+    B->>API: runDetection(sensitivity)
+    API->>F: POST /api/anomalies {dataset, sensitivity}
+    F->>S: load & prepare series
+    S->>S: _zscore_detection()
+    S->>S: _iqr_detection()
+    S->>S: _residual_detection()
+    S->>S: _merge_anomalies(Zscore, IQR, Residual)
+    S-->>F: anomalies[] & summary
+    F->>S: explain_anomalies() -> Gemini/Template
+    F-->>API: 200 OK {anomalies[], total, explanation}
+    API-->>B: renderChart() & renderList()
+    B->>B: store lastData for CSV Export
 ```
 
 ---
@@ -296,64 +255,37 @@ Browser        AnomalyTab        api.js      Flask /api/anomalies     Services
 
 Shows how the system's components relate at deployment time.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FORECASTIQ SYSTEM                            │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │                FRONTEND COMPONENT                        │  │
-│  │                                                          │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │  │
-│  │  │ Forecast │  │ Anomaly  │  │ Scenario │  │Backtest│  │  │
-│  │  │   Tab    │  │   Tab    │  │   Tab    │  │ Panel  │  │  │
-│  │  └────┬─────┘  └────┬─────┘  └─────┬────┘  └───┬────┘  │  │
-│  │       │              │              │             │       │  │
-│  │  ┌────▼──────────────▼──────────────▼─────────────▼───┐  │  │
-│  │  │          api.js (HTTP abstraction layer)            │  │  │
-│  │  └───────────────────────┬─────────────────────────────┘  │  │
-│  │                          │                                │  │
-│  │  ┌──────────────┐  ┌─────▼──────┐  ┌──────────────────┐  │  │
-│  │  │  charts.js   │  │  extras.js │  │   manifest.json  │  │  │
-│  │  │  (Chart.js)  │  │  DataQual  │  │   sw.js (PWA)    │  │  │
-│  │  │              │  │  Threshold │  │                  │  │  │
-│  │  │              │  │  Export    │  │                  │  │  │
-│  │  └──────────────┘  └────────────┘  └──────────────────┘  │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-│                             │ REST JSON over HTTP                │
-│  ┌──────────────────────────▼────────────────────────────────┐  │
-│  │                 BACKEND COMPONENT                         │  │
-│  │                                                           │  │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐   │  │
-│  │  │ /api/    │ │ /api/    │ │ /api/    │ │ /api/     │   │  │
-│  │  │ forecast │ │anomalies │ │scenarios │ │ extras    │   │  │
-│  │  └────┬─────┘ └────┬─────┘ └─────┬────┘ └─────┬─────┘   │  │
-│  │       │             │             │             │          │  │
-│  │  ┌────▼─────────────▼─────────────▼─────────────▼──────┐  │  │
-│  │  │               SERVICES LAYER                        │  │  │
-│  │  │                                                     │  │  │
-│  │  │  ┌────────────┐  ┌──────────────┐  ┌────────────┐  │  │  │
-│  │  │  │ forecaster │  │   anomaly_   │  │  scenario_ │  │  │  │
-│  │  │  │    .py     │  │  detector.py │  │  engine.py │  │  │  │
-│  │  │  └────┬───────┘  └──────┬───────┘  └─────┬──────┘  │  │  │
-│  │  │       │                 │                 │          │  │  │
-│  │  │  ┌────▼─────────────────▼─────────────────▼──────┐  │  │  │
-│  │  │  │  model_comparison · backtester · data_quality  │  │  │  │
-│  │  │  │  baseline · explainer                          │  │  │  │
-│  │  │  └─────────────────────────────────────────────┘  │  │  │  │
-│  │  └─────────────────────────────────────────────────┘  │  │  │
-│  │                                                        │  │  │
-│  │  ┌──────────────────────────────────────────────────┐  │  │
-│  │  │              UTILITIES LAYER                     │  │  │
-│  │  │   data_loader.py  ·  validators.py  ·  config.py │  │  │
-│  │  └──────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌─────────────────┐   ┌─────────────────────────────────┐  │
-│  │  DATA STORE     │   │  EXTERNAL SERVICES              │  │
-│  │  data/*.csv     │   │  Google Gemini API (free tier)  │  │
-│  │  uploads/*.csv  │   │  [optional — template fallback] │  │
-│  └─────────────────┘   └─────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Component_Frontend ["Frontend Component (SPA)"]
+        HTML[UI Tabs\n(Forecast, Anomaly, Scenario)]
+        SW[Service Worker\n(sw.js)]
+        JS["Client Logic\n(api.js, charts.js, extras.js)"]
+        
+        HTML --> JS
+        HTML -.->|Cache| SW
+    end
+
+    subgraph Component_Backend ["Backend Component (Flask)"]
+        API[Flask Routes\n/api/*]
+        Utils[Data Loader & Validators]
+        Services["Core Services\n(Forecaster, AnomalyDetector, 
+             Model_Comparison, Backtester, DataQuality)"]
+        
+        API --> Utils
+        API --> Services
+    end
+
+    subgraph Component_Data ["Data Store & External"]
+        CSV[/"CSV Data Files"/]
+        Gemini{"Google Gemini API"}
+        Stats[[statsmodels Python Lib]]
+    end
+
+    JS <-->|REST over HTTP| API
+    Utils --> CSV
+    Services --> Gemini
+    Services --> Stats
 ```
 
 ---
