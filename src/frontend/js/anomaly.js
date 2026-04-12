@@ -39,6 +39,9 @@ const AnomalyTab = {
             });
 
             const data = response.data;
+            this.lastData = data;
+            ExportModule.lastAnomalyData = data;
+
             this.renderChart(data);
             this.renderSummary(data);
             this.renderAnomalyList(data.anomalies);

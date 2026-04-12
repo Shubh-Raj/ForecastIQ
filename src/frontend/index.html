@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0e1a">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -93,7 +95,18 @@
                 <span class="info-badge" id="data-points-badge">—</span>
                 <span class="info-badge" id="date-range-badge">—</span>
             </div>
-        </div>
+            <!-- Data Health Score card (loads automatically on dataset selection) -->
+            <div class="data-health-card" id="data-health-card" style="display:none;">
+                <div class="health-grade-badge" id="health-grade">—</div>
+                <div class="health-details">
+                    <span class="health-score-label">Health <strong id="health-score">—</strong></span>
+                    <span class="health-pill" id="health-points">—</span>
+                    <span class="health-pill">✓ <span id="health-completeness">—</span></span>
+                    <span class="health-pill">∿ <span id="health-seasonality">—</span></span>
+                </div>
+                <div class="health-model-rec">Recommended: <em id="health-model">—</em></div>
+                <div id="health-warnings"></div>
+            </div>
 
         <!-- Tab Panels -->
         <!-- FORECAST TAB -->
@@ -123,11 +136,19 @@
                             <option value="0.99">99%</option>
                         </select>
                     </div>
+                    <div class="control-group">
+                        <label for="forecast-threshold">Alert Threshold</label>
+                        <input type="number" id="forecast-threshold" class="select-input select-sm"
+                               placeholder="e.g. 8000" title="Warn if lower bound drops below this value">
+                    </div>
                     <button class="btn btn-primary" id="btn-forecast">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="5,3 19,12 5,21"/>
                         </svg>
                         Generate Forecast
+                    </button>
+                    <button class="btn btn-ghost" id="btn-model-race" title="Compare ETS vs ARIMA vs Moving Average">
+                        🏆 Model Race
                     </button>
                 </div>
             </div>
@@ -181,12 +202,61 @@
                 </div>
             </div>
 
+            <!-- Threshold early-warning banner -->
+            <div class="threshold-banner" id="threshold-banner" style="display:none;" role="alert">
+                <span id="threshold-text"></span>
+                <button onclick="document.getElementById('threshold-banner').style.display='none'" class="banner-close">✕</button>
+            </div>
+
             <div class="explanation-card glass-card" id="forecast-explanation" style="display:none;">
                 <div class="explanation-header">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <span>AI Explanation</span>
                 </div>
                 <p class="explanation-text" id="forecast-explanation-text"></p>
+            </div>
+
+            <!-- Model Race Section (hidden until triggered) -->
+            <div class="model-race-section glass-card" id="model-race-section" style="display:none;">
+                <div class="section-header">
+                    <h3>🏆 Model Leaderboard</h3>
+                    <p class="panel-subtitle">ETS vs ARIMA(1,1,1) vs Moving Average — ranked by MAPE</p>
+                </div>
+                <div class="chart-container" style="height:240px;">
+                    <canvas id="model-race-chart"></canvas>
+                </div>
+                <table class="leaderboard-table">
+                    <thead><tr><th>#</th><th>Model</th><th>MAPE</th><th>RMSE</th><th>Notes</th></tr></thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Backtest Section -->
+            <div class="backtest-section glass-card" id="backtest-section" style="display:none;">
+                <div class="section-header">
+                    <h3>🔬 Walk-Forward Backtest</h3>
+                    <p class="panel-subtitle">How accurate would this model have been on held-out data?</p>
+                </div>
+                <div class="backtest-controls">
+                    <label for="backtest-holdout">Hold-out periods</label>
+                    <select id="backtest-holdout" class="select-input select-sm">
+                        <option value="2">2</option>
+                        <option value="4" selected>4</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                    </select>
+                    <button class="btn btn-ghost" id="btn-backtest">Run Backtest</button>
+                </div>
+                <div class="chart-container" style="height:240px;">
+                    <canvas id="backtest-chart"></canvas>
+                </div>
+                <div class="backtest-metrics">
+                    <div class="bt-metric"><span class="bt-val" id="bt-mape">—</span><span class="bt-label">MAPE</span></div>
+                    <div class="bt-metric"><span class="bt-val" id="bt-rmse">—</span><span class="bt-label">RMSE</span></div>
+                    <div class="bt-metric"><span class="bt-val" id="bt-hitrate">—</span><span class="bt-label">Hit Rate</span></div>
+                    <div class="bt-metric"><span class="bt-val" id="bt-bias">—</span><span class="bt-label">Bias</span></div>
+                </div>
+                <p class="explanation-text" id="bt-interpretation"></p>
             </div>
         </section>
 
@@ -213,6 +283,9 @@
                             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                         </svg>
                         Detect Anomalies
+                    </button>
+                    <button class="btn btn-ghost" id="btn-export-anomalies" title="Download anomalies as CSV">
+                        ⬇ Export CSV
                     </button>
                 </div>
             </div>
@@ -375,9 +448,17 @@
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/charts.js"></script>
+    <script src="js/extras.js"></script>
+    <script src="js/backtest.js"></script>
+    <script src="js/model_race.js"></script>
     <script src="js/forecast.js"></script>
     <script src="js/anomaly.js"></script>
     <script src="js/scenario.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>

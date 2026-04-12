@@ -17,10 +17,17 @@ const App = {
         this.initUpload();
         this.loadDatasets();
 
-        // Initialize tab modules
+        // Initialize all tab modules
         ForecastTab.init();
         AnomalyTab.init();
         ScenarioTab.init();
+        BacktestModule.init();
+        ModelRace.init();
+
+        // Export buttons
+        document.getElementById('btn-export-anomalies')?.addEventListener('click', () => {
+            ExportModule.downloadAnomalyCSV(AnomalyTab.lastData);
+        });
 
         // Dataset change handler
         document.getElementById('dataset-select').addEventListener('change', (e) => {
@@ -203,7 +210,6 @@ const App = {
      */
     async onDatasetChange(datasetName) {
         if (!datasetName) return;
-
         this.currentDataset = datasetName;
 
         try {
@@ -213,7 +219,6 @@ const App = {
             // Update column selector
             const columnSelect = document.getElementById('column-select');
             columnSelect.innerHTML = '';
-
             if (summary.numeric_columns && summary.numeric_columns.length > 0) {
                 summary.numeric_columns.forEach((col, idx) => {
                     const option = document.createElement('option');
@@ -224,13 +229,20 @@ const App = {
                 });
             }
 
-            // Update info badges
             document.getElementById('data-points-badge').textContent = `${summary.rows} data points`;
-
             if (summary.date_range) {
                 document.getElementById('date-range-badge').textContent =
                     `${summary.date_range.start} → ${summary.date_range.end}`;
             }
+
+            // Load data quality asynchronously (non-blocking)
+            const col = columnSelect.value;
+            DataQuality.load(datasetName, col);
+
+            // Show backtest section now that data is loaded
+            const btSection = document.getElementById('backtest-section');
+            if (btSection) btSection.style.display = 'block';
+
         } catch (error) {
             console.error('Failed to load dataset summary:', error);
         }

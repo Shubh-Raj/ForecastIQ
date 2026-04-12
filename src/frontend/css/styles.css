@@ -1073,3 +1073,211 @@ body {
         width: 100%;
     }
 }
+
+/* ══════════════════════════════════════════════════
+   NEW FEATURE STYLES — Phase 2
+   ══════════════════════════════════════════════════ */
+
+/* ── Data Health Card (in dataset bar) ── */
+.data-health-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(12px);
+    min-width: 260px;
+    animation: fadeIn 0.3s ease;
+}
+
+.health-grade-badge {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.health-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.health-score-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.health-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.health-model-rec {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+.health-model-rec em {
+    color: var(--accent-primary);
+    font-style: normal;
+    font-weight: 500;
+}
+
+.health-warning {
+    font-size: var(--font-size-xs);
+    color: var(--warning);
+    margin: 0;
+    padding: 0;
+}
+
+/* ── Threshold Alert Banner ── */
+.threshold-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+    animation: fadeIn 0.3s ease;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: #fca5a5;
+}
+
+.banner-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.banner-close:hover { color: var(--text-primary); }
+
+/* ── Section header (inside glass cards) ── */
+.section-header {
+    margin-bottom: var(--space-lg);
+}
+
+.section-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin-bottom: var(--space-xs);
+}
+
+/* ── Model Race Section ── */
+.model-race-section {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-lg);
+    font-size: var(--font-size-sm);
+}
+
+.leaderboard-table th {
+    text-align: left;
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.leaderboard-table td {
+    padding: var(--space-md);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+}
+
+.leaderboard-table tr.leaderboard-winner {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.leaderboard-table tr.leaderboard-winner td {
+    font-weight: 600;
+}
+
+.model-desc {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+}
+
+/* ── Backtest Section ── */
+.backtest-section {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.backtest-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.backtest-controls label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.backtest-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-md);
+}
+
+.bt-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.bt-val {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bt-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .backtest-metrics { grid-template-columns: repeat(2, 1fr); }
+    .data-health-card { min-width: unset; width: 100%; }
+}

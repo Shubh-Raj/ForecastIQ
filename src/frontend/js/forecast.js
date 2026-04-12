@@ -41,9 +41,16 @@ const ForecastTab = {
             });
 
             const data = response.data;
+            this.lastData = data;
+            ExportModule.lastForecastData = data;
+
             this.renderChart(data);
             this.renderInsights(data);
             this.renderExplanation(data.explanation);
+
+            // Check alert threshold
+            const threshold = document.getElementById('forecast-threshold')?.value;
+            ThresholdAlert.check(data, threshold);
 
             App.showToast('Forecast generated successfully', 'success');
         } catch (error) {
