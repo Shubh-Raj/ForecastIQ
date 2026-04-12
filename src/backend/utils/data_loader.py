@@ -196,3 +196,6 @@ def list_available_datasets(data_dir: str) -> List[Dict]:
             })
 
     return datasets
+
+
+# NOTE: pandas 2.x removed fillna(method=). Use .ffill().bfill() instead.
