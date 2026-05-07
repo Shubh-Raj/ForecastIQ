@@ -97,30 +97,6 @@ sequenceDiagram
     S-->>UI: Stream Consensus & Structured Output
 ```
 
-### 3. Forecasting & Rule-Based Agent Flow
-Before forecasting, a rule-based agent evaluates the dataset's characteristics to automatically fill parameters.
-
-```mermaid
-flowchart TD
-    A[Raw CSV Data] --> B[Data Loader & Preprocessor]
-    
-    subgraph RuleBasedAgent ["Rule-Based Agent (data_quality.py)"]
-        C{"Calculate Coefficient<br>of Variation (CV)"}
-        D{"Calculate Size &<br>Seasonality Strength"}
-        C -- CV < 15% --> E[Confidence: 90%]
-        C -- CV > 50% --> F[Confidence: 99%]
-        D -- Small / No Season --> G[Horizon: 4]
-        D -- Large / Seasonal --> H[Horizon: 12-14]
-    end
-    
-    B --> RuleBasedAgent
-    E & F & G & H --> I[Forecaster (ETS/ARIMA)]
-    
-    I --> J[Anomaly Detection]
-    I --> K[Forecast Generation]
-    
-    J & K --> L[AI Explainer / Output]
-```
 
 ---
 
