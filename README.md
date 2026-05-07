@@ -105,8 +105,8 @@ flowchart TD
     A[Raw CSV Data] --> B[Data Loader & Preprocessor]
     
     subgraph RuleBasedAgent ["Rule-Based Agent (data_quality.py)"]
-        C{Calculate Coefficient\nof Variation (CV)}
-        D{Calculate Size & \nSeasonality Strength}
+        C{"Calculate Coefficient<br>of Variation (CV)"}
+        D{"Calculate Size &<br>Seasonality Strength"}
         C -- CV < 15% --> E[Confidence: 90%]
         C -- CV > 50% --> F[Confidence: 99%]
         D -- Small / No Season --> G[Horizon: 4]
