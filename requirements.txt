@@ -10,3 +10,4 @@ python-dotenv>=1.0.0
 gunicorn>=21.0.0
 pytest>=8.0.0
 crewai
+tiktoken==0.7.0
